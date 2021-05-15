@@ -1,0 +1,261 @@
+We use three different ways to match edges :
+
+- Comparing the edges size to only compare edges with similar length.
+- Using color to match edges. For every pixel on the edge, we take the median color of its neighboring pixels and we then compare the distance to the other edge pixel to pixel.
+- Comparing shapes using a Euclidian distance along the edges.
+
+
+
+
+
+uitleg voor randen te herkennen adhv de afstand tov middelpunt
+http://www.martijn-onderwater.nl/2016/10/13/puzzlemaker-extracting-the-four-sides-of-a-jigsaw-piece-from-the-boundary/
+
+rotate
+https://www.pyimagesearch.com/2017/01/02/rotate-images-correctly-with-opencv-and-python/
+
+
+
+# def scrambled_angle(image):
+#     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+#     lines = cv2.HoughLines(gray, 1, np.pi / 180, 85)
+#     for i in range(1, lines.shape[0]):
+#         rho = lines[i][0][0]
+#         theta = lines[i][0][1]
+#         a = np.cos(theta)
+#         b = np.sin(theta)
+#         x0 = a * rho
+#         y0 = b * rho
+#         x1 = int(x0 + 1000 * (-b))
+#         y1 = int(y0 + 1000 * (a))
+#         x2 = int(x0 - 1000 * (-b))
+#         y2 = int(y0 - 1000 * (a))
+#         cv2.line(image, (x1, y1), (x2, y2), (0, 0, 255), 2)
+#         theta = theta * 180/np.pi
+#         if 3 < theta < 87:
+#             angle = theta
+#     print("angle", angle)
+#     return angle
+#
+#
+# def rotateImage(image, angle):
+#     image_center = tuple(np.array(image.shape[1::-1]) / 2)
+#     rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
+#     result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
+#     return result
+
+
+# def get_middle_of_image_2(image, length, width):
+#     up, left, down, right = get_pixelvalue_black_sides(image)
+#     mid_length = round(length/2)
+#     mid_width = round(width/2)
+#     if up > 3:
+#         mid_length += up
+#         if down > 3:
+#             mid_length += down
+#     if left > 3:
+#         mid_width += left
+#         if right > 3:
+#             mid_width += right
+#     image_middle = (mid_width, mid_length)
+#     # get corners
+#     corner1 = width + left, length + up  # Right down
+#     corner2 = width + left, up  # Right up
+#     corner3 = left, length + up  # Left down
+#     corner4 = left, up  # Left up
+#     corners = [corner1, corner2, corner3, corner4]
+#     # print circles
+#     cv2.circle(image, image_middle, 5, (0, 255, 0))
+#     cv2.circle(image, corner1, 5, (0, 255, 0))
+#     cv2.circle(image, corner2, 5, (255, 0, 0))
+#     cv2.circle(image, corner3, 5, (0, 0, 255))
+#     cv2.circle(image, corner4, 5, (255, 255, 255))
+#     return image_middle, corners
+#
+#
+# def get_pixelvalue_black_sides(image):
+#     length = image.shape[0]
+#     width = image.shape[1]
+#     total_array = []
+#     black_l = 0
+#     black_r = 0
+#     black_u = 0
+#     black_d = 0
+#     cst = 1
+#     value = 0
+#     median = 0
+#     while median < cst:
+#         for i in range(length):
+#             value += image[i][width - 1 - black_r][0]
+#             value += image[i][width - 1 - black_r][1]
+#             value += image[i][width - 1 - black_r][2]
+#             total_array.append(value)
+#             value = 0
+#         black_r += 1
+#         median = np.median(total_array)
+#         total_array = []
+#     median = 0
+#     while median < cst:
+#         for i in range(length):
+#             value += image[i][black_l][0]
+#             value += image[i][black_l][1]
+#             value += image[i][black_l][2]
+#             total_array.append(value)
+#             value = 0
+#         black_l += 1
+#         median = np.median(total_array)
+#         total_array = []
+#     median = 0
+#     while median < cst:
+#         for i in range(1, width):
+#             value += image[black_u][i][0]
+#             value += image[black_u][i][1]
+#             value += image[black_u][i][2]
+#             total_array.append(value)
+#             value = 0
+#         black_u += 1
+#         median = np.median(total_array)
+#         total_array = []
+#     median = 0
+#     while median < cst:
+#         for i in range(width):
+#             value += image[length - 1 - black_d][i][0]
+#             value += image[length - 1 - black_d][i][1]
+#             value += image[length - 1 - black_d][i][2]
+#             total_array.append(value)
+#             value = 0
+#         black_d += 1
+#         median = np.median(total_array)
+#         total_array = []
+#     print(black_u)
+#     print(black_l)
+#     print(black_d)
+#     print(black_r)
+#     print("------------")
+#     return black_u, black_l, black_d, black_r
+
+
+# def get_middle_of_image(image, length, width):
+#     # print(" ---------------------- ")
+#     # print(image.shape[0])
+#     # print(length)
+#     # print(image.shape[1])
+#     # print(width)
+#     total_x = 0
+#     total_y = 0
+#     total_w = 0
+#     total_z = 0
+#     percent_length = image.shape[0]/length
+#     percent_width = image.shape[1]/width
+#     percent = 1.21  # HARDCODED
+#     mid_length = round(length / 2)
+#     mid_width = round(width / 2)
+#     org_length = length
+#     org_width = width
+#     # print(percent_width)
+#     # print(percent_length)
+#     for i in range(length):
+#         total_y += image[i][5][0]
+#         total_y += image[i][5][1]
+#         total_y += image[i][5][2]
+#     for i in range(width):
+#         total_x += image[5][i][0]
+#         total_x += image[5][i][1]
+#         total_x += image[5][i][2]
+#     if percent_length > percent or percent_width > percent:
+#         if percent_length > percent:
+#             length = image.shape[0]
+#         if percent_width > percent:
+#             width = image.shape[1]
+#         for i in range(width):
+#             total_w += image[length-5][i][0]
+#             total_w += image[length-5][i][1]
+#             total_w += image[length-5][i][2]
+#         for i in range(length):
+#             total_z += image[i][width-5][0]
+#             total_z += image[i][width-5][1]
+#             total_z += image[i][width-5][2]
+#     total_x /= width  # bovenkant
+#     total_y /= length  # links
+#     total_w /= width  # onderkant
+#     total_z /= length  # rechts
+#     # p1 = width-5, 0
+#     # p2 = width-5, length-1
+#     # cv2.line(image, p1, p2, (255, 0, 0))
+#     # p1 = 0, length -5
+#     # p2 = width-1, length -5
+#     # cv2.line(image, p1, p2, (255, 0, 0))
+#     print(total_x)
+#     print(total_y)
+#     print(total_w)
+#     print(total_z)
+#
+#     # if length < 100:
+#     #     cst = 85
+#     # else:
+#     #     cst = 85
+#
+#     cst = 85
+#
+#     if total_x < cst:
+#         mid_length += image.shape[0] - length
+#     if total_y < cst:
+#         mid_width += image.shape[1] - width
+#     if 0 < total_w < cst:
+#         mid_length += round((image.shape[0] - org_length)/2)
+#     if 0 < total_z < cst:
+#         mid_width += round((image.shape[1] - org_width)/2)
+#     image_middle = (mid_width, mid_length)
+#     # get corners
+#     corner1 = image_middle[0] + round(org_width/2), image_middle[1] + round(org_length/2)  # Right down
+#     corner2 = image_middle[0] - round(org_width/2), image_middle[1] + round(org_length/2)  # Right up
+#     corner3 = image_middle[0] + round(org_width/2), image_middle[1] - round(org_length/2)  # Left down
+#     corner4 = image_middle[0] - round(org_width/2), image_middle[1] - round(org_length/2)  # Left up
+#     corners = [corner1, corner2, corner3, corner4]
+#     # print circles
+#     cv2.circle(image, image_middle, 5, (0, 255, 0))
+#     # cv2.circle(image, corner1, 5, (0, 255, 0))
+#     # cv2.circle(image, corner2, 5, (255, 0, 0))
+#     # cv2.circle(image, corner3, 5, (0, 0, 255))
+#     # cv2.circle(image, corner4, 5, (255, 255, 255))
+#     return image_middle, corners
+
+
+
+def get_smallest_shape(array):
+    length = 1000
+    width = 1000
+    for i in range(len(array)):
+        if array[i].shape[0] < length:
+            length = array[i].shape[0]
+        if array[i].shape[1] < width:
+            width = array[i].shape[1]
+    print(length)
+    print(width)
+    return length, width
+
+
+# def scrambled_angle(image):
+#     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+#     lines = cv2.HoughLines(gray, 1, np.pi / 180, 85)
+#     for i in range(1, lines.shape[0]):
+#         rho = lines[i][0][0]
+#         theta = lines[i][0][1]
+#         a = np.cos(theta)
+#         b = np.sin(theta)
+#         x0 = a * rho
+#         y0 = b * rho
+#         x1 = int(x0 + 1000 * (-b))
+#         y1 = int(y0 + 1000 * (a))
+#         x2 = int(x0 - 1000 * (-b))
+#         y2 = int(y0 - 1000 * (a))
+#         cv2.line(image, (x1, y1), (x2, y2), (0, 0, 255), 2)
+#         theta = theta * 180/np.pi
+#         if 3 < theta < 87:
+#             angle = theta
+#     print("angle_2:", angle)
+#     new_image = imutils.rotate_bound(image, -angle)
+#     rect = get_rectangles(new_image)
+#     array = cut_image_rectangles(new_image, rect)
+#     return array[0]
+
